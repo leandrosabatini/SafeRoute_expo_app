@@ -25,7 +25,7 @@ TaskManager.defineTask('background_location_task', async ({ data: { locations },
     if (!code) {
         Location.stopLocationUpdatesAsync('background_location_task')
     } else {
-        axios.post('http://192.168.0.105:8000/cellphone/setlocation/' + code , {
+        axios.post('https://saferoute.leandrosabatini.com.br/cellphone/setlocation/' + code , {
             'lat': locations[0].coords.latitude,
             'lon': locations[0].coords.longitude
         });
@@ -50,7 +50,7 @@ export default class App extends React.Component {
             Location.stopLocationUpdatesAsync('background_location_task')
         } else {
             var response = await axios
-                .get('http://192.168.0.105:8000/cellphone/exists/' + this.state.codeWrited)
+                .get('https://saferoute.leandrosabatini.com.br/cellphone/exists/' + this.state.codeWrited)
                 .catch(error => {
                     Alert.alert('Código não encontrado!', 'Verifique o código e tente novamente!')
                 })
