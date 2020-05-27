@@ -8,12 +8,15 @@ import {
     Keyboard,
     Linking,
     Alert,
-    View
+    View,
+    SafeAreaView,
+    Image
 } from 'react-native';
 import axios from "axios";
 import * as Permissions from 'expo-permissions';
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
+import Card from './components/Card';
 
 TaskManager.defineTask('background_location_task', async ({ data: { locations }, error }) => {
     if (error) {
@@ -25,7 +28,7 @@ TaskManager.defineTask('background_location_task', async ({ data: { locations },
     if (!code) {
         Location.stopLocationUpdatesAsync('background_location_task')
     } else {
-        axios.post('https://saferoute.leandrosabatini.com.br/cellphone/setlocation/' + code , {
+        axios.post('https://saferoute.leandrosabatini.com.br/cellphone/setlocation/' + code, {
             'lat': locations[0].coords.latitude,
             'lon': locations[0].coords.longitude
         });
@@ -46,7 +49,7 @@ export default class App extends React.Component {
 
     async setCode() {
         if (!this.state.codeWrited) {
-            await AsyncStorage.setItem("code", this.state.codeWrited, () => {});
+            await AsyncStorage.setItem("code", this.state.codeWrited, () => { });
             Location.stopLocationUpdatesAsync('background_location_task')
         } else {
             var response = await axios
@@ -54,13 +57,13 @@ export default class App extends React.Component {
                 .catch(error => {
                     Alert.alert('Código não encontrado!', 'Verifique o código e tente novamente!')
                 })
-            ;
+                ;
 
             if (response.data.success) {
                 const { status, permissions } = await Permissions.askAsync(Permissions.LOCATION);
 
                 if (status === 'granted') {
-                    await AsyncStorage.setItem("code", this.state.codeWrited, () => {});
+                    await AsyncStorage.setItem("code", this.state.codeWrited, () => { });
 
                     Location.stopLocationUpdatesAsync('background_location_task')
                     Location.startLocationUpdatesAsync('background_location_task', {
@@ -87,60 +90,139 @@ export default class App extends React.Component {
     render() {
         this.getCode();
 
-        return (
-            <View style={styles.container}>
-                {this.state.code ? (
-                    <View style={{
-                        alignItems: "center",
-                    }}>
+        var cardCode = null;
+        var inputCardCode = null;
+
+        if (this.state.code) {
+            cardCode = (
+                <Card style={{ width: '55%' }}>
+                    <View style={{ alignItems: "center" }}>
                         <Text>Seu código vinculado atual:</Text>
                         <Text>{this.state.code}</Text>
-                        <Text
-                            style={{ marginTop: 30 }}
-                        >Para alterar o código, insira o novo código:</Text>
                     </View>
-                ) : (
-                    <Text
-                        style={{ marginTop: 30 }}
-                    >Insira o código do celular:</Text>
-                )}
+                </Card>
+            );
 
-                <TextInput
-                    style={{ height: 40, width: '50%', marginTop: 5, borderColor: 'gray', borderWidth: 1 }}
-                    keyboardType={"numeric"}
-                    onChangeText={(value) => {
-                        this.setState({
-                            codeWrited: value,
-                        });
-                    }}
-                    returnKeyType={"next"}
+            inputCardCode = (
+                <Card style={{ width: '90%' }}>
+                    <TextInput
+                        placeholder="Código do Celular"
+                        style={styles.InputText}
+                        keyboardType={"numeric"}
+                        onChangeText={
+                            text => this.setState({
+                                codeWrited: text,
+                            })
+                        }
+                        returnKeyType={"next"}
+                        value={this.state.codeWrited}
+                    />
+
+                    <TouchableOpacity
+                        style={styles.ButtonCode}
+                        onPress={() => {
+                            Keyboard.dismiss();
+                            Alert.alert(
+                                'Atualizar Código',
+                                'Deseja mesmo atualizar seu código?',
+                                [{
+                                    text: 'Não',
+                                    style: 'cancel'
+                                },
+                                {
+                                    text: 'Sim',
+                                    style: 'default',
+                                    onPress: () => {
+                                        this.setCode();
+                                    }
+                                }]
+                            );
+                        }}>
+                        <Text style={styles.ButtonTextCode}>Salvar novo código</Text>
+                    </TouchableOpacity>
+                </Card>
+            );
+        }
+        else {
+            inputCardCode = (
+                <Card style={{ width: '90%' }}>
+
+                    <TextInput
+                        placeholder="Código do Celular"
+                        style={styles.InputText}
+                        keyboardType={"numeric"}
+                        onChangeText={
+                            text => this.setState({
+                                codeWrited: text,
+                            })
+                        }
+                        returnKeyType={"next"}
+                        value={this.state.codeWrited}
+                    />
+
+                    <TouchableOpacity
+                        style={styles.ButtonCode}
+                        onPress={() => {
+                            this.setCode();
+                            Keyboard.dismiss();
+                        }}>
+
+                        <Text style={styles.ButtonTextCode}>Salvar código</Text>
+
+                    </TouchableOpacity>
+                </Card>
+            );
+        }
+
+        return (
+            <SafeAreaView style={styles.container}>
+                <Image
+                    style={styles.MenuLogo}
+                    source={
+                        require('./assets/images/logo-text-black.png')
+                    }
                 />
-                <TouchableOpacity
-                    hitSlop={{ top: 20, left: 20, bottom: 10, right: 20 }}
-                    style={{
-                        height: 40,
-                        width: '50%',
-                        marginTop: 15,
-                        alignItems: "center",
-                        backgroundColor: "#DDDDDD",
-                        padding: 10
-                    }}
-                    onPress={() => {
-                        this.setCode();
-                        Keyboard.dismiss();
-                    }}>
-                    <Text>{this.state.code ? 'Salvar novo código' : 'Salvar código'}</Text>
-                </TouchableOpacity>
-            </View>
+                {inputCardCode}
+                {cardCode}
+            </SafeAreaView>
         );
     }
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f9fa',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    InputText: {
+        textAlign: 'center',
+        maxWidth: '50%',
+        minWidth: '50%',
+        height: 40,
+        borderBottomColor: '#0056b3',
+        borderBottomWidth: 1,
+        padding: 2,
+        marginBottom: 15
+    },
+    ButtonCode: {
+        backgroundColor: '#0056b3',
+        color: '#0056b3',
+        paddingVertical: 10,
+        paddingHorizontal: 25,
+        borderRadius: 25
+    },
+    ButtonTextCode: {
+        color: "#FFF",
+        fontSize: 16
+    },
+    MenuLogo: {
+        justifyContent: "center",
+        alignSelf: "center",
+        alignItems: "center",
+        resizeMode: 'center',
+        width: '50%',
+        height: '15%',
+    }
 });
