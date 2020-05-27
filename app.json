@@ -22,7 +22,13 @@
       "**/*"
     ],
     "ios": {
+      "bundleIdentifier": "com.saferoutecompany.saferouteapp",
+      "buildNumber": "1.0.0",
       "supportsTablet": true
+    },
+    "android": {
+      "package": "com.saferoutecompany.saferouteapp",
+      "versionCode": 1
     }
   }
 }
